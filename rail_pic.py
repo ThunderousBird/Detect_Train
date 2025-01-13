@@ -198,7 +198,6 @@ if __name__ == '__main__':
     ]
 
     # 执行检测并画出框
-    # detect_and_draw(image_path, output_image_path, track_files)
     for filename in os.listdir(input_folder):
         # 检查文件是否为图片
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
