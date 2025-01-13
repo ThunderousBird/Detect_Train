@@ -197,6 +197,8 @@ if __name__ == '__main__':
         "contours/track8_contours.npy",
     ]
 
+
+
     # 执行检测并画出框
     for filename in os.listdir(input_folder):
         # 检查文件是否为图片
