@@ -1,0 +1,39 @@
+# 数据集的根路径
+path: ./dataset  # 数据集所在的根目录路径
+
+# 训练集和验证集的相对路径
+train: images/train  # 训练集图像所在的文件夹路径
+val: images/val      # 验证集图像所在的文件夹路径
+
+# 类别数量
+nc: 2  # 目标类别的总数，轨道和火车分别为一类
+
+# 类别名称
+names: 
+  0: track     # 类别 0：轨道
+  1: carriage  # 类别 1：火车
+
+# 数据增强配置
+augmentations:  
+  mosaic: true       # 启用 Mosaic 数据增强（结合多张图像生成一张）
+  mixup: true        # 启用 MixUp 数据增强（图像混合）
+  hsv_h: 0.015       # 随机色调变化幅度
+  hsv_s: 0.7         # 随机饱和度变化幅度
+  hsv_v: 0.4         # 随机亮度变化幅度
+  flip_ud: true      # 垂直翻转
+  flip_lr: true      # 水平翻转
+  rotation: 10       # 随机旋转角度（单位：度）
+  scale: 0.5         # 随机缩放比例
+  shear: 0.2         # 随机剪切比例
+
+# 防止过拟合配置
+early_stop:          # 提前停止训练
+  enabled: true      # 启用提前停止
+  patience: 5        # 在验证集精度无提升的情况下，连续 5 轮后停止训练
+
+regularization:      # 正则化相关配置
+  weight_decay: 0.0005   
+  dropout: 0.3           
+
+validation:          # 验证相关配置
+  val_split: 0.2     

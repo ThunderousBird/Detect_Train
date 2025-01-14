@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+import json
 from ultralytics import YOLO
 from PIL import Image
 
@@ -83,6 +84,9 @@ def detect_and_draw(image_path, output_image_path, track_files):
         contour = load_and_fix_track_contours(track_file)
         if contour is not None:
             contours[f"Track_{i+1}"] = contour
+    
+    # 初始化轨道状态
+    track_status = {track_name: "empty" for track_name in contours.keys()}
 
     # 使用 YOLO 模型进行推理
     results = model(image)
@@ -109,6 +113,7 @@ def detect_and_draw(image_path, output_image_path, track_files):
                         text = f"{label} {conf:.2f} On {track_name}"  # 包含轨道名称
                         print(f"Train detected on {track_name}")
                         on_track = True
+                        track_status[track_name] = "occupied"
                         break
                 if on_track:
                     break  # 已经确认在轨道上，退出循环
@@ -134,6 +139,8 @@ def detect_and_draw(image_path, output_image_path, track_files):
     # 保存带检测框的图片
     cv2.imwrite(output_image_path, image)
     print(f"Result image saved to {output_image_path}")
+
+    return track_status
 
 def draw_tracks_on_image(image, track_files, output_image_path):
     """
@@ -179,12 +186,23 @@ def draw_tracks_on_image(image, track_files, output_image_path):
     # cv2.destroyAllWindows()
     return image
 
-if __name__ == '__main__':
+
+def save_track_status_to_json(track_status_list, output_json_path):
+    # 保存轨道状态为 JSON 文件
+    with open(output_json_path, "w") as f:
+        json.dump(track_status_list, f, indent=2)
+    print(f"Track status JSON saved to {output_json_path}")
+
+def main():
     # 输入图片路径
     input_folder = "data"
     # 输出图片路径
     output_folder = "output_pic"
-
+    output_folder_json = "output_json"
+    # 输出 JSON 文件路径
+    output_json_path = os.path.join(output_folder_json, "track_status.json")
+    track_status_list = []
+    model = YOLO('model/yolov8x.pt')
     # 轨道坐标文件路径列表
     track_files = [
         "contours/track1_contours.npy",
@@ -200,13 +218,35 @@ if __name__ == '__main__':
 
 
     # 执行检测并画出框
-    for filename in os.listdir(input_folder):
-        # 检查文件是否为图片
+    # for filename in os.listdir(input_folder):
+    #     # 检查文件是否为图片
+    #     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+    #         # 构建完整输入路径和输出路径
+    #         image_path = os.path.join(input_folder, filename)
+    #         output_image_path = os.path.join(output_folder, filename)
+
+    #         # 执行检测并保存结果
+    #         print(f"Processing: {image_path}")
+    #         detect_and_draw(image_path, output_image_path, track_files)
+    for frame_id, filename in enumerate(sorted(os.listdir(input_folder)), start=1):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            # 构建完整输入路径和输出路径
             image_path = os.path.join(input_folder, filename)
             output_image_path = os.path.join(output_folder, filename)
 
-            # 执行检测并保存结果
-            print(f"Processing: {image_path}")
-            detect_and_draw(image_path, output_image_path, track_files)
+            print(f"Processing frame {frame_id}: {image_path}")
+
+            # 调用你的 `detect_and_draw` 函数
+            track_status = detect_and_draw(image_path, output_image_path, track_files)
+
+            # 添加当前帧的轨道状态到列表中
+            if track_status is not None:
+                track_status_list.append({
+                    "frame_id": frame_id,
+                    "track_status": track_status
+                })
+
+    # 保存所有帧的 JSON 文件
+    save_track_status_to_json(track_status_list, output_json_path)
+
+if __name__ == '__main__':
+    main()
